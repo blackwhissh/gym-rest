@@ -36,6 +36,7 @@ public class TraineeController {
 
     @GetMapping("{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Get Trainee Profile", description = "This method returns Trainee profile")
     public ResponseEntity<TraineeProfileResponse> getTraineeProfile(@PathVariable String username,
                                                                     @RequestBody LoginDTO loginDTO) throws AuthenticationException {
         return traineeService.selectCurrentTraineeProfile(username, loginDTO);
@@ -43,6 +44,7 @@ public class TraineeController {
 
     @PutMapping("/update/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Update Trainee Profile", description = "This method updates Trainee profile")
     public ResponseEntity<UpdateTraineeResponse> updateTraineeProfile(@PathVariable String username,
                                                                       @RequestBody UpdateTraineeRequest request) throws AuthenticationException {
         LoginDTO loginDTO = request.getLoginDTO();
@@ -51,6 +53,7 @@ public class TraineeController {
 
     @DeleteMapping("/delete/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Delete Trainee Profile", description = "This method deletes Trainee profile")
     public ResponseEntity<?> deleteTraineeProfile(@PathVariable String username,
                                                   @RequestBody LoginDTO loginDTO) throws AccessDeniedException, AuthenticationException {
         traineeService.deleteTrainee(username, loginDTO);
@@ -59,6 +62,7 @@ public class TraineeController {
 
     @GetMapping(value = "/not-assigned-trainers/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Get Not Assigned Trainers", description = "This method returns Trainers list who are not assigned to this Trainee")
     public ResponseEntity<List<NotAssignedTrainer>> getNotAssignedTrainers(@PathVariable String username,
                                                                            @RequestBody LoginDTO loginDTO) throws AuthenticationException {
         return traineeService.notAssignedTrainersList(username, loginDTO);
@@ -66,6 +70,7 @@ public class TraineeController {
 
     @PutMapping(value = "/update-trainers/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Update Trainee's Trainers List", description = "This method returns Trainee's Trainers profile")
     public ResponseEntity<List<TrainerListInfo>> updateTrainersList(@PathVariable String username,
                                                                     @RequestBody UpdateTrainersListRequest request) throws AuthenticationException {
         return traineeService.updateTrainersList(username, request);
@@ -73,6 +78,7 @@ public class TraineeController {
 
     @GetMapping(value = "/trainings/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Get Trainee's Trainings List", description = "This method returns Trainee's Trainings list")
     public ResponseEntity<List<TraineeTrainingsResponse>> getTrainingsList(@PathVariable String username,
                                                                            @RequestBody TraineeTrainingsRequest request) throws AuthenticationException {
         return traineeService.getTrainingList(username, request);

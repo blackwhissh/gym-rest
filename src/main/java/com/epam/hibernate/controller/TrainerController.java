@@ -10,6 +10,7 @@ import com.epam.hibernate.dto.trainer.response.TrainerTrainingsResponse;
 import com.epam.hibernate.dto.trainer.response.UpdateTrainerResponse;
 import com.epam.hibernate.dto.user.LoginDTO;
 import com.epam.hibernate.service.TrainerService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,12 +28,14 @@ public class TrainerController {
 
     @PostMapping(value = "/register")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Register Trainer Profile", description = "This method registers Trainer and returns username and password")
     public ResponseEntity<TrainerRegisterResponse> registerTrainee(@RequestBody TrainerRegisterRequest request) {
         return trainerService.createProfile(request);
     }
 
     @GetMapping(value = "{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Get Trainer Profile", description = "This method returns Trainer profile")
     public ResponseEntity<TrainerProfileResponse> getTrainerProfile(@PathVariable String username,
                                                                     @RequestBody LoginDTO loginDTO) throws AuthenticationException {
         return trainerService.selectCurrentTrainerProfile(username, loginDTO);
@@ -40,6 +43,7 @@ public class TrainerController {
 
     @PutMapping(value = "/update/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Update Trainer Profile", description = "This method updates Trainer profile")
     public ResponseEntity<UpdateTrainerResponse> updateTrainerProfile(@PathVariable String username,
                                                                       @RequestBody UpdateTrainerRequest request) throws AuthenticationException {
         return trainerService.updateTrainer(username, request);
@@ -47,6 +51,7 @@ public class TrainerController {
 
     @GetMapping(value = "/trainings/{username}")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Get Trainer's Trainings List", description = "This method returns Trainer's Trainings list")
     public ResponseEntity<List<TrainerTrainingsResponse>> getTrainingsList(@PathVariable String username,
                                                                            @RequestBody TrainerTrainingsRequest request) throws AuthenticationException {
         return trainerService.getTrainingList(username, request);

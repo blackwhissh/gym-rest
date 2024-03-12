@@ -5,6 +5,7 @@ import com.epam.hibernate.dto.AddTrainingRequest;
 import com.epam.hibernate.dto.user.LoginDTO;
 import com.epam.hibernate.entity.TrainingType;
 import com.epam.hibernate.service.TrainingService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,11 +24,13 @@ public class TrainingController {
     }
     @PostMapping(value = "/add")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Add Training", description = "This method adds new  Training")
     public ResponseEntity<?> addTraining(@RequestBody AddTrainingRequest request) throws AccessDeniedException, AuthenticationException, NotActiveException {
         return trainingService.addTraining(request);
     }
     @GetMapping(value = "/types")
     @LogEntryExit(showArgs = true, showResult = true)
+    @Operation(summary = "Get Training Types", description = "This method returns Training Types")
     public ResponseEntity<List<TrainingType>> getTrainingTypes(@RequestBody LoginDTO loginDTO) throws AuthenticationException {
         return trainingService.getTrainingTypes(loginDTO);
     }
