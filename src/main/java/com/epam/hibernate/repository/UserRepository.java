@@ -1,6 +1,7 @@
 package com.epam.hibernate.repository;
 
 import com.epam.hibernate.entity.User;
+import com.epam.hibernate.exception.AuthenticationErrorException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
@@ -23,25 +24,38 @@ public class UserRepository {
         logger.info("Count - " + count);
         return count > 0;
     }
-    public User save(User user){
+
+    @Transactional
+    public User save(User user) {
         logger.info("User saved successfully");
         return entityManager.merge(user);
     }
 
     @Transactional
-    public void authenticate(String username, String password) throws AuthenticationException {
+    public boolean authenticate(String username, String password) throws AuthenticationException {
         if (usernameExists(username)) {
             User user = (User) entityManager.createQuery("from User u where u.username = :username")
                     .setParameter("username", username)
                     .getSingleResult();
             if (user.getPassword().equals(password)) {
                 logger.info("User authenticated successfully");
+                return true;
             } else {
                 logger.warning("Wrong password");
-                throw new AuthenticationException();
+                throw new AuthenticationErrorException();
             }
         } else {
             logger.warning("User not found");
+            throw new EntityNotFoundException();
+        }
+    }
+
+    public User findByUsername(String username) {
+        if (usernameExists(username)) {
+            return (User) entityManager.createQuery("from User u where u.username = :username")
+                    .setParameter("username", username)
+                    .getSingleResult();
+        } else {
             throw new EntityNotFoundException();
         }
     }
@@ -63,7 +77,6 @@ public class UserRepository {
                 .executeUpdate();
         logger.info("User activated/deactivated successfully");
     }
-
 
 
 }

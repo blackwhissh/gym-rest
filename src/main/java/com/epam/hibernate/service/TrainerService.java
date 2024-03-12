@@ -1,20 +1,32 @@
 package com.epam.hibernate.service;
 
-import com.epam.hibernate.entity.*;
+import com.epam.hibernate.dto.trainee.TraineeListInfo;
+import com.epam.hibernate.dto.trainer.request.TrainerRegisterRequest;
+import com.epam.hibernate.dto.trainer.request.TrainerTrainingsRequest;
+import com.epam.hibernate.dto.trainer.request.UpdateTrainerRequest;
+import com.epam.hibernate.dto.trainer.response.TrainerProfileResponse;
+import com.epam.hibernate.dto.trainer.response.TrainerRegisterResponse;
+import com.epam.hibernate.dto.trainer.response.TrainerTrainingsResponse;
+import com.epam.hibernate.dto.trainer.response.UpdateTrainerResponse;
+import com.epam.hibernate.dto.user.LoginDTO;
+import com.epam.hibernate.entity.RoleEnum;
+import com.epam.hibernate.entity.Trainer;
+import com.epam.hibernate.entity.Training;
+import com.epam.hibernate.entity.User;
 import com.epam.hibernate.repository.TrainerRepository;
 import com.epam.hibernate.repository.TrainingTypeRepository;
 import com.epam.hibernate.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.naming.AuthenticationException;
 import java.nio.file.AccessDeniedException;
-import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.epam.hibernate.Utils.checkAdmin;
 import static com.epam.hibernate.Utils.generateUsername;
 
 @Service
@@ -22,65 +34,95 @@ public class TrainerService {
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainerRepository trainerRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @Autowired
     public TrainerService(TrainingTypeRepository trainingTypeRepository,
                           TrainerRepository trainerRepository,
-                          UserRepository userRepository) {
+                          UserRepository userRepository, UserService userService) {
         this.trainingTypeRepository = trainingTypeRepository;
         this.trainerRepository = trainerRepository;
         this.userRepository = userRepository;
+        this.userService = userService;
     }
 
-    public Trainer createProfile(@NotNull String firstName, @NotNull String lastName,
-                                 @NotNull Boolean isActive, @NotNull TrainingTypeEnum trainingTypeEnum) {
-        User trainerUser = new User(firstName, lastName, isActive, RoleEnum.TRAINER);
+    public ResponseEntity<TrainerRegisterResponse> createProfile(@NotNull TrainerRegisterRequest request) {
+        User trainerUser = new User(request.getFirstName(), request.getLastName(), true, RoleEnum.TRAINER);
         if (!userRepository.usernameExists(generateUsername(trainerUser.getFirstName(), trainerUser.getLastName(), false))) {
             trainerUser.setUsername(generateUsername(trainerUser.getFirstName(), trainerUser.getLastName(), false));
         } else {
             trainerUser.setUsername(generateUsername(trainerUser.getFirstName(), trainerUser.getLastName(), true));
         }
-        Trainer trainer = new Trainer(trainingTypeRepository.selectByType(trainingTypeEnum), trainerUser);
+        Trainer trainer = new Trainer(trainingTypeRepository.selectByType(request.getSpecialization()),
+                trainerUser);
         trainerRepository.save(trainer);
-        return trainer;
+        return ResponseEntity.ok().body(new TrainerRegisterResponse(
+                trainer.getUser().getUsername(),
+                trainer.getUser().getPassword()
+        ));
     }
 
-    public Trainer selectCurrentTrainerProfile(@NotNull Trainer currentTrainer) throws AuthenticationException {
-        userRepository.authenticate(currentTrainer.getUser().getUsername(), currentTrainer.getUser().getPassword());
-        return trainerRepository.selectByUsername(currentTrainer.getUser().getUsername());
+    public ResponseEntity<TrainerProfileResponse> selectCurrentTrainerProfile(@NotNull String username, @NotNull LoginDTO loginDTO) throws AuthenticationException {
+        userService.authenticate(loginDTO);
+        Trainer trainer = trainerRepository.selectByUsername(username);
+        return ResponseEntity.ok(new TrainerProfileResponse(
+                trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(),
+                trainer.getSpecialization(),
+                trainer.getUser().getActive(),
+                trainer.getTrainees().stream().map(trainee -> new TraineeListInfo(
+                        trainee.getUser().getUsername(),
+                        trainee.getUser().getFirstName(),
+                        trainee.getUser().getLastName()
+                )).collect(Collectors.toSet())
+        ));
     }
 
-    public Trainer selectProfile(@NotNull String newUsername, @NotNull User admin) throws AuthenticationException, AccessDeniedException {
-        checkAdmin(admin);
-        userRepository.authenticate(admin.getUsername(), admin.getPassword());
-        return trainerRepository.selectByUsername(newUsername);
-    }
+//    public Trainer selectProfile(@NotNull String newUsername, @NotNull User admin) throws AuthenticationException, AccessDeniedException {
+//        userRepository.authenticate(admin.getUsername(), admin.getPassword());
+//        return trainerRepository.selectByUsername(newUsername);
+//    }
 
-    public void changePassword(@NotNull String newPassword, @NotNull Trainer currentTrainer) throws AuthenticationException {
-        userRepository.authenticate(currentTrainer.getUser().getUsername(), currentTrainer.getUser().getPassword());
-        userRepository.changePassword(newPassword, currentTrainer.getUser().getUserId());
-        currentTrainer.getUser().setPassword(newPassword);
-    }
+    public ResponseEntity<UpdateTrainerResponse> updateTrainer(@NotNull String username, @NotNull UpdateTrainerRequest request) throws AuthenticationException {
+        userService.authenticate(request.getLoginDTO());
 
-    public void updateTrainer(@NotNull TrainingType newSpecialization, @NotNull Trainer currentTrainer) throws AuthenticationException {
-        userRepository.authenticate(currentTrainer.getUser().getUsername(), currentTrainer.getUser().getPassword());
-        trainerRepository.updateTrainer(newSpecialization, currentTrainer.getTrainerId());
-        currentTrainer.setSpecialization(newSpecialization);
+        Trainer trainer = trainerRepository.updateTrainer(username, request.getFirstName(), request.getLastName(),
+                request.getActive(), request.getSpecialization());
+        return ResponseEntity.ok().body(new UpdateTrainerResponse(
+                trainer.getUser().getUsername(),
+                trainer.getUser().getFirstName(),
+                trainer.getUser().getLastName(),
+                trainer.getSpecialization(),
+                trainer.getUser().getActive(),
+                trainer.getTrainees().stream().map(trainee -> new TraineeListInfo(
+                        trainee.getUser().getUsername(),
+                        trainee.getUser().getFirstName(),
+                        trainee.getUser().getLastName()
+                )).collect(Collectors.toSet())
+        ));
     }
 
     public void activateDeactivate(@NotNull Trainer currentTrainer, @NotNull User admin) throws AuthenticationException, AccessDeniedException {
-        checkAdmin(admin);
+
         userRepository.authenticate(admin.getUsername(), admin.getPassword());
         currentTrainer.getUser().setActive(!currentTrainer.getUser().getActive());
         userRepository.activateDeactivate(currentTrainer.getUser().getActive(), currentTrainer.getUser().getUserId());
     }
 
     @Transactional
-    public List<Training> getTrainingList(@NotNull Trainer currentTrainer, Date fromDate, Date toDate,
-                                          String traineeName, TrainingTypeEnum trainingTypeEnum) throws AuthenticationException {
-        userRepository.authenticate(currentTrainer.getUser().getUsername(), currentTrainer.getUser().getPassword());
-        return trainerRepository.getTrainingList(currentTrainer.getUser().getUsername(),
-                fromDate, toDate, traineeName, trainingTypeEnum);
+    public ResponseEntity<List<TrainerTrainingsResponse>> getTrainingList(@NotNull String username, @NotNull TrainerTrainingsRequest request) throws AuthenticationException {
+        userService.authenticate(request.getLoginDTO());
+
+        List<Training> trainingList = trainerRepository.getTrainingList(username,
+                request.getFrom(), request.getTo(), request.getTraineeName(),
+                trainerRepository.selectByUsername(username).getSpecialization().getTrainingTypeName());
+        return ResponseEntity.ok(trainingList.stream().map(training -> new TrainerTrainingsResponse(
+                training.getTrainingName(),
+                training.getTrainingDate(),
+                training.getTrainingType(),
+                training.getTrainingDuration(),
+                training.getTrainer().getUser().getFirstName()
+        )).toList());
     }
 
 

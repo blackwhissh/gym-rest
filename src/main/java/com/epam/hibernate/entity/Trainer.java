@@ -22,9 +22,9 @@ public class Trainer {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")
     private User user;
-    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "trainer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Training> trainings = new ArrayList<>();
-    @ManyToMany(mappedBy = "trainers", cascade = CascadeType.ALL)
+    @ManyToMany(mappedBy = "trainers", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private Set<Trainee> trainees = new HashSet<>();
 
     public Trainer() {

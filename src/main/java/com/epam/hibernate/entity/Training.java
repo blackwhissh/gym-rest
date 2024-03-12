@@ -1,5 +1,6 @@
 package com.epam.hibernate.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -24,7 +25,8 @@ public class Training {
     @JoinColumn(name = "training_type_id")
     private TrainingType trainingType;
     @Column(name = "training_date")
-    @DateTimeFormat(pattern = "dd-mm-yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date trainingDate;
     @Column(name = "training_duration", nullable = false)
     private Integer trainingDuration;

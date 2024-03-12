@@ -1,5 +1,6 @@
 package com.epam.hibernate.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import org.hibernate.annotations.Cascade;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -15,18 +16,19 @@ public class Trainee {
     @Column(name = "trainee_id", nullable = false)
     private Long traineeId;
     @Column(name = "date_of_birth")
-    @DateTimeFormat(pattern = "dd-mm-yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date dob;
     @Column(name = "address")
     private String address;
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "user_id")
     private User user;
-    @OneToMany(mappedBy = "trainee",orphanRemoval = true)
+    @OneToMany(mappedBy = "trainee", orphanRemoval = true, fetch = FetchType.EAGER)
     @Cascade({org.hibernate.annotations.CascadeType.ALL,
-    org.hibernate.annotations.CascadeType.DELETE_ORPHAN})
+            org.hibernate.annotations.CascadeType.DELETE_ORPHAN})
     private List<Training> trainings = new ArrayList<>();
-    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "trainee_trainer_mapping",
             joinColumns = @JoinColumn(name = "trainee_id"),
@@ -94,11 +96,12 @@ public class Trainee {
         this.trainings = trainings;
     }
 
-    public void addTraining(Training training){
+    public void addTraining(Training training) {
         trainings.add(training);
         training.setTrainee(this);
     }
-    public void removeTraining(Training training){
+
+    public void removeTraining(Training training) {
         trainings.remove(training);
         training.setTrainee(null);
     }
