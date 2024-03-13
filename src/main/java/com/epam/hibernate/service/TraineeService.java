@@ -79,9 +79,9 @@ public class TraineeService {
 //        return traineeRepository.selectByUsername(newUsername);
 //    }
 
-    public ResponseEntity<UpdateTraineeResponse> updateTrainee(@NotNull String username, @NotNull LoginDTO loginDTO,
+    public ResponseEntity<UpdateTraineeResponse> updateTrainee(@NotNull String username,
                                                                @NotNull UpdateTraineeRequest request) throws AuthenticationException {
-        userService.authenticate(loginDTO);
+        userService.authenticate(request.getLoginDTO());
         Trainee trainee = traineeRepository.updateTrainee(username, request.getDob(), request.getAddress(),
                 request.getFirstName(), request.getLastName(), request.getActive());
 

@@ -38,6 +38,7 @@ public class Utils {
     public static void checkAdmin(String username, UserRepository repository) {
         User user = repository.findByUsername(username);
         if (user.getRole() != RoleEnum.ADMIN) {
+            logger.warning("User " + username + " does not have admin authority.");
             throw new NoAuthorityException("User must be an admin");
         }
     }

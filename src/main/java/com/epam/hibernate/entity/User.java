@@ -35,6 +35,10 @@ public class User {
         this.password = Utils.generatePassword();
     }
 
+    public User(RoleEnum roleEnum) {
+        this.role = roleEnum;
+    }
+
     public Long getUserId() {
         return userId;
     }

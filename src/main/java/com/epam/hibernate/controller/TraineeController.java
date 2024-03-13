@@ -48,7 +48,7 @@ public class TraineeController {
     public ResponseEntity<UpdateTraineeResponse> updateTraineeProfile(@PathVariable String username,
                                                                       @RequestBody UpdateTraineeRequest request) throws AuthenticationException {
         LoginDTO loginDTO = request.getLoginDTO();
-        return traineeService.updateTrainee(username, loginDTO, request);
+        return traineeService.updateTrainee(username, request);
     }
 
     @DeleteMapping("/delete/{username}")
