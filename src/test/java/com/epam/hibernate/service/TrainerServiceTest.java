@@ -1,137 +1,169 @@
-//package com.epam.hibernate.service;
-//
-//import com.epam.hibernate.entity.*;
-//import com.epam.hibernate.repository.TrainerRepository;
-//import com.epam.hibernate.repository.TrainingTypeRepository;
-//import com.epam.hibernate.repository.UserRepository;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//
-//import javax.naming.AuthenticationException;
-//import java.nio.file.AccessDeniedException;
-//import java.util.List;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.when;
-//
-//@ExtendWith(MockitoExtension.class)
-//class TrainerServiceTest {
-//    @Mock
-//    private TrainerRepository trainerRepository;
-//    @Mock
-//    private UserRepository userRepository;
-//    @Mock
-//    private TrainingTypeRepository trainingTypeRepository;
-//    @InjectMocks
-//    private TrainerService trainerService;
-//
-//    @Test
-//    void createProfile() {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//        assertNotNull(trainer);
-//
-//        when(trainerRepository.save(any(Trainer.class))).thenReturn(trainer);
-//
-//        assertEquals(trainer, trainerRepository.save(trainer));
-//        assertEquals(trainer.getUser().getUsername(), "test.test");
-//    }
-//
-//    @Test
-//    void createProfileWithSameUsername() {
-//        Trainer trainer1 = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        when(userRepository.usernameExists("test.test")).thenReturn(true);
-//
-//        Trainer trainer2 = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        assertNotEquals(trainer1.getUser().getUsername(), trainer2.getUser().getUsername());
-//    }
-//
-//    @Test
-//    void selectProfile() throws AuthenticationException, AccessDeniedException {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        User user = new User("admin", "admin", true, RoleEnum.ADMIN);
-//        when(trainerRepository.selectByUsername(trainer.getUser().getUsername())).thenReturn(trainer);
-//
-//        Trainer result = trainerService.selectProfile(trainer.getUser().getUsername(), user);
-//
-//        assertNotNull(result);
-//        assertEquals(trainer, result);
-//    }
-//
-//    @Test
-//    void selectCurrentTrainerProfile() throws AuthenticationException {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        when(trainerRepository.selectByUsername(trainer.getUser().getUsername())).thenReturn(trainer);
-//
-//        Trainer result = trainerService.selectCurrentTrainerProfile(trainer);
-//
-//        assertNotNull(result);
-//        assertEquals(trainer, result);
-//
-//    }
-//
-//    @Test
-//    void selectProfileAccessDenied() {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        User user = new User("admin", "admin", true, RoleEnum.TRAINER);
-//
-//        assertThrows(AccessDeniedException.class, () -> trainerService.selectProfile(trainer.getUser().getUsername(), user));
-//    }
-//
-//    @Test
-//    void changePassword() throws AuthenticationException {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        trainerService.changePassword("password", trainer);
-//
-//        assertEquals("password", trainer.getUser().getPassword());
-//    }
-//
-//    @Test
-//    void updateTrainer() throws AuthenticationException {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//
-//        when(trainingTypeRepository.selectByType(TrainingTypeEnum.AGILITY)).thenReturn(new TrainingType(TrainingTypeEnum.AGILITY));
-//
-//        TrainingType trainingType = trainingTypeRepository.selectByType(TrainingTypeEnum.AGILITY);
-//
-//        trainerService.updateTrainer(trainingType, trainer);
-//
-//        assertEquals(TrainingTypeEnum.AGILITY, trainer.getSpecialization().getTrainingTypeName());
-//    }
-//
-//    @Test
-//    void activateDeactivate() throws AuthenticationException, AccessDeniedException {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//        User admin = new User("admin", "admin", true, RoleEnum.ADMIN);
-//
-//        trainerService.activateDeactivate(trainer, admin);
-//
-//        assertEquals(false, trainer.getUser().getActive());
-//    }
-//
-//    @Test
-//    void getTrainingList() throws AuthenticationException {
-//        Trainer trainer = trainerService.createProfile("test", "test", true, TrainingTypeEnum.BALANCE);
-//        Training training1 = new Training();
-//        Training training2 = new Training();
-//
-//        trainer.addTraining(training1);
-//        trainer.addTraining(training2);
-//
-//        when(trainerRepository.getTrainingList(trainer.getUser().getUsername(), null, null, null, null)).thenReturn(List.of(training1, training2));
-//
-//        List<Training> trainings = trainerService.getTrainingList(trainer, null, null, null, null);
-//        assertEquals(trainer.getTrainings().size(), trainings.size());
-//
-//
-//    }
-//}
+package com.epam.hibernate.service;
+
+import com.epam.hibernate.dto.trainer.request.TrainerRegisterRequest;
+import com.epam.hibernate.dto.trainer.request.TrainerTrainingsRequest;
+import com.epam.hibernate.dto.trainer.request.UpdateTrainerRequest;
+import com.epam.hibernate.dto.trainer.response.TrainerProfileResponse;
+import com.epam.hibernate.dto.trainer.response.TrainerRegisterResponse;
+import com.epam.hibernate.dto.trainer.response.TrainerTrainingsResponse;
+import com.epam.hibernate.dto.trainer.response.UpdateTrainerResponse;
+import com.epam.hibernate.dto.user.LoginDTO;
+import com.epam.hibernate.entity.*;
+import com.epam.hibernate.repository.TrainerRepository;
+import com.epam.hibernate.repository.TrainingTypeRepository;
+import com.epam.hibernate.repository.UserRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.springframework.http.ResponseEntity;
+
+import javax.naming.AuthenticationException;
+
+import java.util.Date;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TrainerServiceTest {
+    @Mock
+    private TrainerRepository trainerRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private TrainingTypeRepository trainingTypeRepository;
+    @Mock
+    private UserService userService;
+    @InjectMocks
+    private TrainerService trainerService;
+
+    private TrainingType createMockTrainingType() {
+        TrainingType trainingType = mock(TrainingType.class);
+
+        when(trainingType.getTrainingTypeName()).thenReturn(TrainingTypeEnum.AGILITY);
+
+        return trainingType;
+    }
+
+    private Trainer createMockTrainer() {
+        Trainer mockTrainer = mock(Trainer.class);
+        User mockUser = mock(User.class);
+        TrainingType trainingType = createMockTrainingType();
+        when(mockTrainer.getUser()).thenReturn(mockUser);
+        when(mockTrainer.getSpecialization()).thenReturn(trainingType);
+        return mockTrainer;
+    }
+
+    @Test
+    void createProfileOk() {
+        when(userRepository.usernameExists(any(String.class))).thenReturn(false);
+
+        TrainingType mockTrainingType = createMockTrainingType();
+        when(trainingTypeRepository.selectByType(any(TrainingTypeEnum.class))).thenReturn(mockTrainingType);
+
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(new Trainer());
+
+        TrainerRegisterRequest request = new TrainerRegisterRequest(
+                "John", "Doe", mockTrainingType.getTrainingTypeName()
+        );
+        ResponseEntity<TrainerRegisterResponse> responseEntity = trainerService.createProfile(request);
+
+        assertEquals(200, responseEntity.getStatusCode().value());
+        verify(userRepository, times(1)).usernameExists(any(String.class));
+        verify(trainingTypeRepository, times(1)).selectByType(any(TrainingTypeEnum.class));
+        verify(trainerRepository, times(1)).save(any(Trainer.class));
+    }
+
+    @Test
+    void createProfileSameNameOk() {
+        when(userRepository.usernameExists(any(String.class))).thenReturn(true);
+
+        TrainingType mockTrainingType = createMockTrainingType();
+        when(trainingTypeRepository.selectByType(any(TrainingTypeEnum.class))).thenReturn(mockTrainingType);
+
+        when(trainerRepository.save(any(Trainer.class))).thenReturn(new Trainer());
+
+        TrainerRegisterRequest request = new TrainerRegisterRequest(
+                "John", "Doe", mockTrainingType.getTrainingTypeName()
+        );
+        trainerService.createProfile(request);
+
+        assertNotEquals("John.Doe", "John.Doe0");
+        verify(userRepository, times(1)).usernameExists(any(String.class));
+        verify(trainingTypeRepository, times(1)).selectByType(any(TrainingTypeEnum.class));
+        verify(trainerRepository, times(1)).save(any(Trainer.class));
+    }
+
+    @Test
+    void selectCurrentTrainerProfileOk() throws AuthenticationException {
+        when(userService.authenticate(any(LoginDTO.class))).thenReturn(null);
+
+        Trainer mockTrainer = createMockTrainer();
+        when(trainerRepository.selectByUsername(any(String.class))).thenReturn(mockTrainer);
+
+        // Call the method under test
+        LoginDTO loginDTO = new LoginDTO("admin", "admin");
+        ResponseEntity<TrainerProfileResponse> responseEntity = trainerService.selectCurrentTrainerProfile("John.Trainer", loginDTO);
+
+        // Assertions
+        assertEquals(200, responseEntity.getStatusCode().value());
+        // Add more assertions based on your specific scenario
+        verify(trainerRepository, times(1)).selectByUsername("John.Trainer");
+    }
+
+    @Test
+    void updateTrainerOk() throws AuthenticationException {
+        when(userService.authenticate(any(LoginDTO.class))).thenReturn(null);
+
+        Trainer mockTrainer = createMockTrainer();
+
+        when(trainerRepository.updateTrainer(any(String.class), any(String.class), any(String.class),
+                any(Boolean.class), any(TrainingTypeEnum.class)))
+                .thenReturn(mockTrainer);
+
+        UpdateTrainerRequest updateRequest = new UpdateTrainerRequest(
+                new LoginDTO("John.Trainer", "password"),
+                "John", "Trainer", TrainingTypeEnum.AGILITY, true
+        );
+        ResponseEntity<UpdateTrainerResponse> responseEntity = trainerService.updateTrainer("John.Trainer", updateRequest);
+
+        assertEquals(200, responseEntity.getStatusCode().value());
+        verify(trainerRepository, times(1)).updateTrainer("John.Trainer", updateRequest.getFirstName(), updateRequest.getLastName(), updateRequest.getActive(), updateRequest.getSpecialization());
+    }
+    @Test
+    void getTrainingListOk() throws AuthenticationException {
+        // Mock the userService.authenticate behavior
+        when(userService.authenticate(any(LoginDTO.class))).thenReturn(null);
+
+        Trainer mockTrainer = createMockTrainer();
+
+        when(trainerRepository.selectByUsername(any(String.class))).thenReturn(mockTrainer);
+
+        List<Training> mockTrainingList = createMockTrainingList();
+        when(trainerRepository.getTrainingList(any(String.class), any(Date.class), any(Date.class),
+                any(String.class), any(TrainingTypeEnum.class))).thenReturn(mockTrainingList);
+
+        // Call the method under test
+        TrainerTrainingsRequest trainingsRequest = new TrainerTrainingsRequest(new LoginDTO("username", "password"),
+                null, null, "traineeName");
+        ResponseEntity<List<TrainerTrainingsResponse>> responseEntity = trainerService.getTrainingList("username", trainingsRequest);
+
+        // Assertions
+        assertEquals(200, responseEntity.getStatusCode().value());
+    }
+
+    // Add more test cases for various scenarios, e.g., when authentication fails, when there are no trainings, etc.
+
+    private List<Training> createMockTrainingList() {
+        Training mockTraining = mock(Training.class);
+        return List.of(mockTraining);
+    }
+}

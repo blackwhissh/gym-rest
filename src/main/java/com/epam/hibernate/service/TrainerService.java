@@ -23,7 +23,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.naming.AuthenticationException;
-import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -100,13 +99,6 @@ public class TrainerService {
                         trainee.getUser().getLastName()
                 )).collect(Collectors.toSet())
         ));
-    }
-
-    public void activateDeactivate(@NotNull Trainer currentTrainer, @NotNull User admin) throws AuthenticationException, AccessDeniedException {
-
-        userRepository.authenticate(admin.getUsername(), admin.getPassword());
-        currentTrainer.getUser().setActive(!currentTrainer.getUser().getActive());
-        userRepository.activateDeactivate(currentTrainer.getUser().getActive(), currentTrainer.getUser().getUserId());
     }
 
     @Transactional
